@@ -20,7 +20,7 @@
 
   * command コンテナにログインして、mailxコマンドでメールを送信する。
 
-    $ docker exec -it mailx bash
+    $ docker exec -it command sh
 
     # echo 'mail body' | mailx \
         -v \
