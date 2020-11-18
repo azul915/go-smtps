@@ -1,36 +1,43 @@
-version: '2'
+version: '3'
 services:
   postfix:
+    environment:
+      # DOMAIN, RELAYHOSTIP and RELAYHOSTPORT are used in run.sh (postfix container's entry point)
+      - "DOMAIN=$DOMAIN"
+      - "RELAYHOSTIP=${SMTP_IP:-192.168.0.2}"
+      - "RELAYHOSTPORT=${SMTP_PORT:-1025}"
     container_name: 'postfix'
     build: ./postfix
+    # buildと共に使えば、どのディレクトリでビルドしても以下のイメージ名になるはず
+    image: smeghead/docker-postfix-tls
     ports:
      - "587:587"
      - "25:25"
     networks:
       app_net:
-        ipv4_address: 192.168.0.3
+        ipv4_address: ${POSTFIX_IP:-192.168.0.3}
   smtp:
     image: schickling/mailcatcher
     container_name: 'smtp'
     ports:
      - "1080:1080"
-     - "1025:1025"
+     - "1025:${SMTP_PORT}"
     networks:
       app_net:
-        ipv4_address: 192.168.0.2
+        ipv4_address: ${SMTP_IP:-192.168.0.2}
   command:
     container_name: "command"
     image: harobed/docker-heirloom-mailx
     command: /bin/sh -c "while :; do sleep 10; done"
     networks:
       app_net:
-        ipv4_address: 192.168.0.4
+        ipv4_address: ${COMMANDHOST_IP:-192.168.0.4}
 networks:
   app_net:
     driver: bridge
     ipam:
      driver: default
      config:
-       - subnet: 192.168.0.0/24
+       - subnet: ${SUBNET:-192.168.0.0/24}
 
 # vim: set sts=2 ts=2 sw=2 expandtab:
