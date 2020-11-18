@@ -1,0 +1,36 @@
+version: '2'
+services:
+  postfix:
+    container_name: 'postfix'
+    build: ./postfix
+    ports:
+     - "587:587"
+     - "25:25"
+    networks:
+      app_net:
+        ipv4_address: 192.168.0.3
+  smtp:
+    image: schickling/mailcatcher
+    container_name: 'smtp'
+    ports:
+     - "1080:1080"
+     - "1025:1025"
+    networks:
+      app_net:
+        ipv4_address: 192.168.0.2
+  command:
+    container_name: "command"
+    image: harobed/docker-heirloom-mailx
+    command: /bin/sh -c "while :; do sleep 10; done"
+    networks:
+      app_net:
+        ipv4_address: 192.168.0.4
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+     driver: default
+     config:
+       - subnet: 192.168.0.0/24
+
+# vim: set sts=2 ts=2 sw=2 expandtab:
