@@ -1,9 +1,13 @@
 #!/bin/bash
-DOMAIN=postfix.example.com
+DOMAIN_DEFAULT=postfix.example.com
+DOMAIN=${DOMAIN:-$DOMAIN_DEFAULT}
 
 echo "******************************"
 echo "**** POSTFIX STARTING UP *****"
 echo "******************************"
+
+echo "DOMAIN: ${DOMAIN}"
+echo "RELAY : ${RELAYHOSTIP}:${RELAYHOSTPORT}"
 
 # Make and reown postfix folders
 mkdir -p /var/spool/postfix/ && mkdir -p /var/spool/postfix/pid
@@ -33,7 +37,7 @@ postconf -e "smtp_tls_CApath=/etc/ssl/certs"
 
 postconf -e myhostname="$DOMAIN"
 postconf -e mydomain="$DOMAIN"
-postconf -e relayhost=[192.168.0.2]:1025
+postconf -e relayhost=[$RELAYHOSTIP]:$RELAYHOSTPORT
 postconf -e "smtp_sasl_auth_enable=no"
 
 postconf -e "smtp_host_lookup=native"
