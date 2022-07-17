@@ -12,7 +12,7 @@
     $ docker-compose up
 
 
-## mail catcher の確認方法 ##
+## mail dev の確認方法 ##
 
 ブラウザで http://localhost:1080/ にアクセスする。
 
@@ -100,10 +100,3 @@ Connecting to 192.168.0.3:587 . . . connected.
 221 2.0.0 Bye
 / # exit
 ```
-
-### postfixコンテナのログからの抜粋
-
-    postfix    | 2020-11-18T14:26:30.861334+00:00 36587352c6a6 postfix/smtpd[135]: Anonymous TLS connection established from unknown[192.168.0.4]: TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits)
-
-TLSv1.2 で送信できてそう。
-
