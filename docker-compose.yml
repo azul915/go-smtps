@@ -16,6 +16,11 @@ services:
     ports:
      - "1080:1080"
      - "1025:${MAILCATCHER_PORT}"
-  command:
-    image: harobed/docker-heirloom-mailx
-    command: /bin/sh -c "while :; do sleep 10; done"
+  # command:
+  #   image: harobed/docker-heirloom-mailx
+  #   command: /bin/sh -c "while :; do sleep 10; done"
+  app:
+    image: golang:1.18-bullseye
+    command: /bin/bash -c "tail -f /dev/null"
+    volumes:
+    - ./app/main.go:/main.go
