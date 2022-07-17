@@ -21,7 +21,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	s := NewSender(*e, *c)
+	s := NewSender(e, c)
 	if err = s.SendEmail(); err != nil {
 		log.Fatal(err)
 	}
@@ -37,10 +37,10 @@ type mailDev struct {
 	smtpConfig
 }
 
-func NewSender(envelope envelope, smtpConfig smtpConfig) Sender {
+func NewSender(envelope *envelope, smtpConfig *smtpConfig) Sender {
 	return &mailDev{
-		envelope:   envelope,
-		smtpConfig: smtpConfig,
+		envelope:   *envelope,
+		smtpConfig: *smtpConfig,
 	}
 }
 
