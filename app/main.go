@@ -18,13 +18,13 @@ func main() {
 type Sender interface {
 	SendEmail() error
 }
-type mailCatcher struct{}
+type mailDev struct{}
 
 func NewSender() Sender {
-	return &mailCatcher{}
+	return &mailDev{}
 }
 
-func (mc *mailCatcher) SendEmail() error {
+func (mc *mailDev) SendEmail() error {
 
 	ev := NewEnvelope("hoge@example.com", []string{"foo@example.com"}, "test subject", "tls test mail")
 	smtpConfig := NewSmtpConfig(os.Getenv("SMTP_USER"), os.Getenv("SMTP_PASSWORD"), "postfix", 587)
