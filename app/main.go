@@ -4,12 +4,16 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"net/mail"
 	"net/smtp"
 	"os"
 )
 
 func main() {
-	s := NewSender()
+
+	e := NewEnvelope("hoge@example.com", []string{"foo@example.com", "bar@example.com"}, "test subject", "tls test mail")
+	c := NewSmtpConfig(os.Getenv("SMTP_USER"), os.Getenv("SMTP_PASSWORD"), "postfix", 587)
+	s := NewSender(e, c)
 	if err := s.SendEmail(); err != nil {
 		log.Fatal(err)
 	}
@@ -18,111 +22,144 @@ func main() {
 type Sender interface {
 	SendEmail() error
 }
-type mailDev struct{}
+type mailDev struct {
+	Envelope
+	SmtpConfig
+}
 
-func NewSender() Sender {
-	return &mailDev{}
+func NewSender(envelope *Envelope, smtpConfig *SmtpConfig) Sender {
+	return &mailDev{
+		Envelope:   *envelope,
+		SmtpConfig: *smtpConfig,
+	}
 }
 
 func (mc *mailDev) SendEmail() error {
 
-	ev := NewEnvelope("hoge@example.com", []string{"foo@example.com"}, "test subject", "tls test mail")
-	smtpConfig := NewSmtpConfig(os.Getenv("SMTP_USER"), os.Getenv("SMTP_PASSWORD"), "postfix", 587)
-
-	auth := smtp.PlainAuth("", smtpConfig.User(), smtpConfig.Password(), smtpConfig.Host())
-
-	c, err := smtp.Dial(smtpConfig.Addr())
+	c, err := smtp.Dial(string(mc.SmtpConfig.Addr()))
 	if err != nil {
 		return err
 	}
+	defer c.Close()
 
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
-		ServerName:         smtpConfig.Host(),
+	// EHLO
+	if err = c.Hello(string(mc.SmtpConfig.Host())); err != nil {
+		return err
 	}
-	c.StartTLS(tlsConfig)
+	// STARTTLS
+	if err = c.StartTLS(&tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         string(mc.SmtpConfig.Host()),
+	}); err != nil {
+		return err
+	}
 
+	// AUTH PLAIN
+	auth := smtp.PlainAuth("", string(mc.SmtpConfig.User()), string(mc.SmtpConfig.Password()), string(mc.SmtpConfig.Host()))
 	if err = c.Auth(auth); err != nil {
 		return err
 	}
-	if err = c.Mail(ev.From()); err != nil {
-		return err
-	}
-	if err = c.Rcpt(ev.To()[0]); err != nil {
-		return err
-	}
-	w, err := c.Data()
-	if err != nil {
-		return err
+
+	for _, v := range mc.Envelope.To() {
+		// RSET
+		if err = c.Reset(); err != nil {
+			return err
+		}
+		// MAIL
+		if err = c.Mail(string(mc.Envelope.From())); err != nil {
+			return err
+		}
+		// RCPT
+		if err = c.Rcpt(v.Address); err != nil {
+			return err
+		}
+		// DATA
+		w, err := c.Data()
+		if err != nil {
+			return err
+		}
+		_, err = w.Write(mc.Envelope.Message())
+		if err != nil {
+			return err
+		}
+		w.Close()
 	}
 
-	_, err = w.Write([]byte(ev.Message()))
-	if err != nil {
+	// QUIT
+	if err = c.Quit(); err != nil {
 		return err
 	}
-	err = w.Close()
-	if err != nil {
-		return err
-	}
-
-	c.Quit()
 	log.Printf("mail send succeeded")
-
 	return nil
 }
 
+type (
+	User     string
+	Password string
+	Host     string
+	Port     int
+	Address  string
+)
+
 type SmtpConfig struct {
-	user     string
-	password string
-	host     string
-	port     int
-	addr     string
+	user     User
+	password Password
+	host     Host
+	port     Port
+	addr     Address
 }
 
-func NewSmtpConfig(user, passoword, host string, port int) *SmtpConfig {
+func NewSmtpConfig(user, password, host string, port int) *SmtpConfig {
 
 	addr := fmt.Sprintf("%s:%d", host, port)
 	return &SmtpConfig{
-		user:     user,
-		password: passoword,
-		host:     host,
-		port:     port,
-		addr:     addr,
+		user:     User(user),
+		password: Password(password),
+		host:     Host(host),
+		port:     Port(port),
+		addr:     Address(addr),
 	}
 }
 
-func (sc *SmtpConfig) User() string     { return sc.user }
-func (sc *SmtpConfig) Password() string { return sc.password }
-func (sc *SmtpConfig) Host() string     { return sc.host }
-func (sc *SmtpConfig) Port() int        { return sc.port }
-func (sc *SmtpConfig) Addr() string     { return sc.addr }
+func (sc *SmtpConfig) User() User         { return sc.user }
+func (sc *SmtpConfig) Password() Password { return sc.password }
+func (sc *SmtpConfig) Host() Host         { return sc.host }
+func (sc *SmtpConfig) Port() Port         { return sc.port }
+func (sc *SmtpConfig) Addr() Address      { return sc.addr }
+
+type (
+	From    string
+	To      []mail.Address
+	Subject string
+	Body    string
+	Message []byte
+)
 
 type Envelope struct {
-	from    string
-	to      []string
-	subject string
-	body    string
-	message string
+	from    From
+	to      To
+	subject Subject
+	body    Body
 }
 
 func NewEnvelope(from string, to []string, subject string, body string) *Envelope {
 
-	msg := fmt.Sprintf(`
-From: %s
-To: %s
-%s
-%s
-`, from, to, subject, body)
+	mas := make([]mail.Address, len(to))
+	for i := range to {
+		mas[i] = mail.Address{Name: "", Address: to[i]}
+	}
 	return &Envelope{
-		from:    from,
-		to:      to,
-		subject: subject,
-		body:    body,
-		message: msg,
+		from:    From(from),
+		to:      mas,
+		subject: Subject(subject),
+		body:    Body(body),
 	}
 }
 
-func (e *Envelope) From() string    { return e.from }
-func (e *Envelope) To() []string    { return e.to }
-func (e *Envelope) Subject() string { return e.subject }
-func (e *Envelope) Message() []byte { return []byte(e.message) }
+func (e *Envelope) From() From       { return e.from }
+func (e *Envelope) To() To           { return e.to }
+func (e *Envelope) Subject() Subject { return e.subject }
+func (e *Envelope) Message() Message {
+	msg := fmt.Sprintf("To: %s\r\n"+"Subject: %s\r\n\r\n%s\r\n", e.to, e.subject, e.body)
+	return []byte(msg)
+}
