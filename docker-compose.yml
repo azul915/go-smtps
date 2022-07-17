@@ -6,7 +6,6 @@ services:
       - "DOMAIN=$DOMAIN"
       - "RELAYHOSTIP=${MAILCATCHER_IP}"
       - "RELAYHOSTPORT=${MAILCATCHER_PORT}"
-    container_name: 'postfix'
     build: ./postfix
     # buildと共に使えば、どのディレクトリでビルドしても以下のイメージ名になるはず
     image: smeghead/docker-postfix-tls
@@ -18,7 +17,6 @@ services:
         ipv4_address: ${POSTFIX_IP}
   mailcatcher:
     image: schickling/mailcatcher
-    container_name: 'mailcatcher'
     ports:
      - "1080:1080"
      - "1025:${MAILCATCHER_PORT}"
@@ -26,7 +24,6 @@ services:
       app_net:
         ipv4_address: ${MAILCATCHER_IP}
   command:
-    container_name: "command"
     image: harobed/docker-heirloom-mailx
     command: /bin/sh -c "while :; do sleep 10; done"
     networks:
