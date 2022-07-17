@@ -2,11 +2,14 @@
 DOMAIN_DEFAULT=postfix.example.com
 DOMAIN=${DOMAIN:-$DOMAIN_DEFAULT}
 
+while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' mailcatcher:1080)" != "200" ]]; do sleep 3; echo waiting for mailcatcher...; done
+
 echo "******************************"
 echo "**** POSTFIX STARTING UP *****"
 echo "******************************"
 
 echo "DOMAIN: ${DOMAIN}"
+export RELAYHOSTIP=$(dig mailcatcher +short)
 echo "RELAY : ${RELAYHOSTIP}:${RELAYHOSTPORT}"
 
 # Make and reown postfix folders

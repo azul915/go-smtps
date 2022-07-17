@@ -1,40 +1,21 @@
 version: '2'
 services:
   postfix:
+    image: smeghead/docker-postfix-tls
     environment:
-      # DOMAIN, RELAYHOSTIP and RELAYHOSTPORT are used in run.sh (postfix container's entry point)
       - "DOMAIN=$DOMAIN"
-      - "RELAYHOSTIP=${MAILCATCHER_IP}"
       - "RELAYHOSTPORT=${MAILCATCHER_PORT}"
     build: ./postfix
-    # buildと共に使えば、どのディレクトリでビルドしても以下のイメージ名になるはず
-    image: smeghead/docker-postfix-tls
     ports:
      - "587:587"
      - "25:25"
-    networks:
-      app_net:
-        ipv4_address: ${POSTFIX_IP}
+    depends_on:
+      - mailcatcher
   mailcatcher:
     image: schickling/mailcatcher
     ports:
      - "1080:1080"
      - "1025:${MAILCATCHER_PORT}"
-    networks:
-      app_net:
-        ipv4_address: ${MAILCATCHER_IP}
   command:
     image: harobed/docker-heirloom-mailx
     command: /bin/sh -c "while :; do sleep 10; done"
-    networks:
-      app_net:
-        ipv4_address: ${COMMANDHOST_IP}
-networks:
-  app_net:
-    driver: bridge
-    ipam:
-     driver: default
-     config:
-       - subnet: ${SUBNET}
-
-# vim: set sts=2 ts=2 sw=2 expandtab:
