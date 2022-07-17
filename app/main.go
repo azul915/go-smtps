@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"fmt"
 	"log"
@@ -11,7 +12,7 @@ import (
 
 func main() {
 
-	e := NewEnvelope("hoge@example.com", []string{"foo@example.com", "bar@example.com"}, "test subject", "tls test mail")
+	e := NewEnvelope("hoge@example.com", []string{"foo@example.com"}, "test subject", "tls test mail")
 	c := NewSmtpConfig(os.Getenv("SMTP_USER"), os.Getenv("SMTP_PASSWORD"), "postfix", 587)
 	s := NewSender(e, c)
 	if err := s.SendEmail(); err != nil {
@@ -48,6 +49,7 @@ func (mc *mailDev) SendEmail() error {
 	}
 	// STARTTLS
 	if err = c.StartTLS(&tls.Config{
+		// TODO: certification
 		InsecureSkipVerify: true,
 		ServerName:         string(mc.SmtpConfig.Host()),
 	}); err != nil {
@@ -61,10 +63,23 @@ func (mc *mailDev) SendEmail() error {
 	}
 
 	// AUTH PLAIN
-	auth := smtp.PlainAuth("", string(mc.SmtpConfig.User()), string(mc.SmtpConfig.Password()), string(mc.SmtpConfig.Host()))
+	// auth := smtp.PlainAuth("", string(mc.SmtpConfig.User()), string(mc.SmtpConfig.Password()), string(mc.SmtpConfig.Host()))
+	// if err = c.Auth(auth); err != nil {
+	// 	return err
+	// }
+	// AUTH CRAM-MD5
+	auth := smtp.CRAMMD5Auth(string(mc.SmtpConfig.User()), string(mc.SmtpConfig.Password()))
 	if err = c.Auth(auth); err != nil {
 		return err
 	}
+
+	// toAsString := make([]string, len(mc.Envelope.To()))
+	// for i := range mc.Envelope.To() {
+	// 	toAsString[i] = string(mc.Envelope.To()[i].Address)
+	// }
+	// if err = smtp.SendMail(string(mc.SmtpConfig.Addr()), auth, string(mc.Envelope.From()), toAsString, mc.Envelope.Message()); err != nil {
+	// 	return err
+	// }
 
 	for _, v := range mc.Envelope.To() {
 		// RSET
@@ -168,6 +183,15 @@ func (e *Envelope) From() From       { return e.from }
 func (e *Envelope) To() To           { return e.to }
 func (e *Envelope) Subject() Subject { return e.subject }
 func (e *Envelope) Message() Message {
-	msg := fmt.Sprintf("Subject: %s\r\n\r\n%s\r\n", e.subject, e.body)
-	return []byte(msg)
+
+	msg := bytes.NewBuffer([]byte(""))
+	msg.WriteString(fmt.Sprintf("From: %s\r\n", e.from))
+	msg.WriteString(fmt.Sprintf("To: %s\r\n", e.to))
+	msg.WriteString(fmt.Sprintf("Bcc: %s\r\n", ""))
+	msg.WriteString(fmt.Sprintf("Subject: %s\r\n", e.subject))
+	msg.WriteString("MIME-Version: 1.0\r\n")
+	msg.WriteString("Content-Type: text/plain; charset=\"utf-8\"\r\n")
+	msg.WriteString("Content-Transfer-Encoding: base64\r\n")
+	msg.WriteString("\r\n")
+	return msg.Bytes()
 }
