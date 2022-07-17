@@ -54,6 +54,12 @@ func (mc *mailDev) SendEmail() error {
 		return err
 	}
 
+	if _, ok := c.TLSConnectionState(); ok {
+		log.Println("with SMTP over SSL/TLS(TLS 1.2)")
+	} else {
+		log.Println("with SMTP (plain text)")
+	}
+
 	// AUTH PLAIN
 	auth := smtp.PlainAuth("", string(mc.SmtpConfig.User()), string(mc.SmtpConfig.Password()), string(mc.SmtpConfig.Host()))
 	if err = c.Auth(auth); err != nil {
@@ -66,10 +72,12 @@ func (mc *mailDev) SendEmail() error {
 			return err
 		}
 		// MAIL
+		log.Printf("From: %v\n", mc.Envelope.From())
 		if err = c.Mail(string(mc.Envelope.From())); err != nil {
 			return err
 		}
 		// RCPT
+		log.Printf("To: %v\n", v.Address)
 		if err = c.Rcpt(v.Address); err != nil {
 			return err
 		}
@@ -160,6 +168,6 @@ func (e *Envelope) From() From       { return e.from }
 func (e *Envelope) To() To           { return e.to }
 func (e *Envelope) Subject() Subject { return e.subject }
 func (e *Envelope) Message() Message {
-	msg := fmt.Sprintf("To: %s\r\n"+"Subject: %s\r\n\r\n%s\r\n", e.to, e.subject, e.body)
+	msg := fmt.Sprintf("Subject: %s\r\n\r\n%s\r\n", e.subject, e.body)
 	return []byte(msg)
 }
