@@ -26,7 +26,7 @@ func NewSender() Sender {
 func (mc *mailCatcher) SendEmail() error {
 
 	ev := NewEnvelope("hoge@example.com", []string{"foo@example.com"}, "test subject", "tls test mail")
-	smtpConfig := NewSmtpConfig("smtpuser", "password", "postfix", 587)
+	smtpConfig := NewSmtpConfig("smtpuser", "smtppassword", "postfix", 587)
 
 	auth := smtp.PlainAuth("", smtpConfig.User(), smtpConfig.Password(), smtpConfig.Host())
 

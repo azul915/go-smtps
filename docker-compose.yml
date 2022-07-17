@@ -5,17 +5,19 @@ services:
     environment:
       - "DOMAIN=$DOMAIN"
       - "RELAYHOSTPORT=${MAILCATCHER_PORT}"
+      - "SMTP_USER=$SMTP_USER"
+      - "SMTP_PASSWORD=$SMTP_PASSWORD"
     build: ./postfix
     ports:
-     - "587:587"
-     - "25:25"
+      - "587:587"
+      - "25:25"
     depends_on:
       - mailcatcher
   mailcatcher:
     image: schickling/mailcatcher
     ports:
-     - "1080:1080"
-     - "1025:${MAILCATCHER_PORT}"
+      - "1080:1080"
+      - "1025:${MAILCATCHER_PORT}"
   # command:
   #   image: harobed/docker-heirloom-mailx
   #   command: /bin/sh -c "while :; do sleep 10; done"
@@ -23,4 +25,7 @@ services:
     image: golang:1.18-bullseye
     command: /bin/bash -c "tail -f /dev/null"
     volumes:
-    - ./app/main.go:/main.go
+      - ./app/main.go:/main.go
+    environment:
+      - "SMTP_USER=$SMTP_USER"
+      - "SMTP_PASSWORD=$SMTP_PASSWORD"

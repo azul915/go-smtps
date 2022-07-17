@@ -64,7 +64,8 @@ auxprop_plugin: sasldb
 mech_list: PLAIN LOGIN CRAM-MD5 DIGEST-MD5 NTLM
 EOF
 # sasldb2
-echo 'password' | saslpasswd2 -p -c -u $DOMAIN 'smtpuser'
+echo 'smtppassword' | saslpasswd2 -p -c -u $DOMAIN 'smtpuser'
+# echo $SMTP_USER | saslpasswd2 -p -c -u $DOMAIN $SMTP_PASSWORD
 chown postfix.sasl /etc/sasldb2
 #chown postfix.postfix /etc/sasldb2
 #postfixが参照するためハードリンクする http://kt-hiro.hatenablog.com/entry/20120318/1332023507
