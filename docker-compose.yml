@@ -4,7 +4,7 @@ services:
     image: smeghead/docker-postfix-tls
     environment:
       - "DOMAIN=$DOMAIN"
-      - "RELAYHOSTPORT=$MAILCATCHER_PORT"
+      - "RELAYHOSTPORT=$RELAYHOSTPORT"
       - "SMTP_USER=$SMTP_USER"
       - "SMTP_PASSWORD=$SMTP_PASSWORD"
     build: ./postfix
@@ -12,12 +12,13 @@ services:
       - "587:587"
       - "25:25"
     depends_on:
-      - mailcatcher
-  mailcatcher:
-    image: schickling/mailcatcher
+      - maildev
+  maildev:
+    image: maildev/maildev
+    command: >
+      /bin/maildev -w $MAILDEVAPPPORT -s $RELAYHOSTPORT
     ports:
-      - "1080:1080"
-      - "1025:$MAILCATCHER_PORT"
+      - "1080:$MAILDEVAPPPORT"
   # command:
   #   image: harobed/docker-heirloom-mailx
   #   command: /bin/sh -c "while :; do sleep 10; done"
