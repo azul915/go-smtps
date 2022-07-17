@@ -3,14 +3,11 @@ services:
   postfix:
     image: smeghead/docker-postfix-tls
     environment:
-      - "DOMAIN=$DOMAIN"
-      - "RELAYHOSTPORT=$RELAYHOSTPORT"
       - "SMTP_USER=$SMTP_USER"
       - "SMTP_PASSWORD=$SMTP_PASSWORD"
+      - "DOMAIN=$DOMAIN"
+      - "RELAYHOSTPORT=$RELAYHOSTPORT"
     build: ./postfix
-    ports:
-      - "587:587"
-      - "25:25"
     depends_on:
       - maildev
   maildev:
@@ -28,5 +25,7 @@ services:
     volumes:
       - ./app/main.go:/main.go
     environment:
+      - "SMTP_DOMAIN=$SMTP_DOMAIN"
+      - "SMTP_PORT=$SMTP_PORT"
       - "SMTP_USER=$SMTP_USER"
       - "SMTP_PASSWORD=$SMTP_PASSWORD"

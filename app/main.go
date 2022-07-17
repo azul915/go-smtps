@@ -8,14 +8,21 @@ import (
 	"net/mail"
 	"net/smtp"
 	"os"
+	"strconv"
 )
 
 func main() {
 
 	e := NewEnvelope("hoge@example.com", []string{"foo@example.com"}, "test subject", "tls test mail")
-	c := NewSmtpConfig(os.Getenv("SMTP_USER"), os.Getenv("SMTP_PASSWORD"), "postfix", 587)
+
+	// c, err := NewSmtpConfig(os.Getenv("SMTP_USER"), os.Getenv("SMTP_PASSWORD"), os.Getenv("SMTP_DOMAIN"), os.Getenv("SMTP_PORT"))
+	c, err := NewSmtpConfig(os.Getenv("SMTP_USER"), os.Getenv("SMTP_PASSWORD"), "postfix", "587")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	s := NewSender(e, c)
-	if err := s.SendEmail(); err != nil {
+	if err = s.SendEmail(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -132,16 +139,21 @@ type SmtpConfig struct {
 	addr     Address
 }
 
-func NewSmtpConfig(user, password, host string, port int) *SmtpConfig {
+func NewSmtpConfig(user, password, host string, port string) (*SmtpConfig, error) {
 
-	addr := fmt.Sprintf("%s:%d", host, port)
+	p, err := strconv.Atoi(port)
+	if err != nil {
+		return nil, err
+	}
+
+	addr := fmt.Sprintf("%s:%d", host, p)
 	return &SmtpConfig{
 		user:     User(user),
 		password: Password(password),
 		host:     Host(host),
-		port:     Port(port),
+		port:     Port(p),
 		addr:     Address(addr),
-	}
+	}, nil
 }
 
 func (sc *SmtpConfig) User() User         { return sc.user }
