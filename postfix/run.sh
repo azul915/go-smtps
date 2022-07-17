@@ -64,8 +64,8 @@ auxprop_plugin: sasldb
 mech_list: PLAIN LOGIN CRAM-MD5 DIGEST-MD5 NTLM
 EOF
 # sasldb2
-echo 'smtppassword' | saslpasswd2 -p -c -u $DOMAIN 'smtpuser'
-# echo $SMTP_USER | saslpasswd2 -p -c -u $DOMAIN $SMTP_PASSWORD
+echo SMTP_USER: $SMTP_USER, SMTP_PASSWORD: $SMTP_PASSWORD
+echo $SMTP_PASSWORD | saslpasswd2 -p -c -u $DOMAIN $SMTP_USER
 chown postfix.sasl /etc/sasldb2
 #chown postfix.postfix /etc/sasldb2
 #postfixが参照するためハードリンクする http://kt-hiro.hatenablog.com/entry/20120318/1332023507
@@ -78,16 +78,6 @@ postconf -e "smtpd_relay_restrictions=permit"
 
 # Use 587 (submission)
 sed -i -r -e 's/^#submission/submission/' /etc/postfix/master.cf
-
-#if [ -d /docker-init.db/ ]; then
-#	echo "- Executing any found custom scripts..."
-#	for f in /docker-init.db/*; do
-#		case "$f" in
-#			*.sh)     chmod +x "$f"; echo -e"\trunning $f"; . "$f" ;;
-#			*)        echo "$0: ignoring $f" ;;
-#		esac
-#	done
-#fi
 
 echo "- Staring rsyslog and postfix"
 exec supervisord -c /etc/supervisord.conf

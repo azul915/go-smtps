@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/smtp"
+	"os"
 )
 
 func main() {
@@ -26,7 +27,7 @@ func NewSender() Sender {
 func (mc *mailCatcher) SendEmail() error {
 
 	ev := NewEnvelope("hoge@example.com", []string{"foo@example.com"}, "test subject", "tls test mail")
-	smtpConfig := NewSmtpConfig("smtpuser", "smtppassword", "postfix", 587)
+	smtpConfig := NewSmtpConfig(os.Getenv("SMTP_USER"), os.Getenv("SMTP_PASSWORD"), "postfix", 587)
 
 	auth := smtp.PlainAuth("", smtpConfig.User(), smtpConfig.Password(), smtpConfig.Host())
 

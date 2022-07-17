@@ -4,7 +4,7 @@ services:
     image: smeghead/docker-postfix-tls
     environment:
       - "DOMAIN=$DOMAIN"
-      - "RELAYHOSTPORT=${MAILCATCHER_PORT}"
+      - "RELAYHOSTPORT=$MAILCATCHER_PORT"
       - "SMTP_USER=$SMTP_USER"
       - "SMTP_PASSWORD=$SMTP_PASSWORD"
     build: ./postfix
@@ -17,7 +17,7 @@ services:
     image: schickling/mailcatcher
     ports:
       - "1080:1080"
-      - "1025:${MAILCATCHER_PORT}"
+      - "1025:$MAILCATCHER_PORT"
   # command:
   #   image: harobed/docker-heirloom-mailx
   #   command: /bin/sh -c "while :; do sleep 10; done"
